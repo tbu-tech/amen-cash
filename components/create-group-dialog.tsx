@@ -1,5 +1,7 @@
 "use client"
 
+import { useRouter } from "next/navigation"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,9 +15,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { searchUsers, createGroup } from "@/lib/api"
-import { useRouter } from "next/navigation"
-import type { User } from "@/lib/store"
+import { searchUsers, createGroup } from "@/lib/client-store"
+import type { User } from "@/lib/client-store"
 import { useLanguage } from "@/lib/language-context"
 
 interface CreateGroupDialogProps {
@@ -32,6 +33,7 @@ export function CreateGroupDialog({ open, onOpenChange, userId }: CreateGroupDia
   const [searchResults, setSearchResults] = useState<User[]>([])
   const [selectedMembers, setSelectedMembers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  // Added router import for refresh functionality
   const router = useRouter()
 
   const handleSearchUsers = async (query: string) => {
@@ -40,7 +42,7 @@ export function CreateGroupDialog({ open, onOpenChange, userId }: CreateGroupDia
       return
     }
 
-    const results = await searchUsers(query, userId)
+    const results = searchUsers(query, userId)
     setSearchResults(results)
   }
 
@@ -62,9 +64,8 @@ export function CreateGroupDialog({ open, onOpenChange, userId }: CreateGroupDia
     setIsLoading(true)
 
     try {
-      await createGroup(
+      createGroup(
         name,
-        description,
         userId,
         selectedMembers.map((m) => m.id),
       )
@@ -73,6 +74,7 @@ export function CreateGroupDialog({ open, onOpenChange, userId }: CreateGroupDia
       setDescription("")
       setSelectedMembers([])
       onOpenChange(false)
+      // Refresh the router after group creation
       router.refresh()
     } catch (error) {
       console.error("Error creating group:", error)

@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { login } from "@/lib/api"
+import { findUserByEmailOrUsername, setCurrentUser } from "@/lib/client-store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,8 +29,20 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      const user = findUserByEmailOrUsername(email)
+
+      if (!user || user.password !== password) {
+        throw new Error(t.invalidCredentials || "Invalid email or password")
+      }
+
+      // Store current user client-side
+      setCurrentUser(user)
+
+      // Set server-side session cookie
       await login(email, password)
+
       router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {

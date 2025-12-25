@@ -6,11 +6,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DollarSign, Plus, Users, LogOut } from "lucide-react"
 import { logout } from "@/lib/api"
+import { getUserGroups, clearCurrentUser } from "@/lib/client-store"
+import type { User, Group } from "@/lib/client-store"
 import { useRouter } from "next/navigation"
 import { CreateGroupDialog } from "@/components/create-group-dialog"
 import { AddExpenseDialog } from "@/components/add-expense-dialog"
 import { GroupExpensesView } from "@/components/group-expenses-view"
-import type { User, Group } from "@/lib/store"
 import { useLanguage } from "@/lib/language-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
 
@@ -19,14 +20,20 @@ interface DashboardContentProps {
   groups: Group[]
 }
 
-export function DashboardContent({ user, groups }: DashboardContentProps) {
+export function DashboardContent({ user, groups: initialGroups }: DashboardContentProps) {
   const { t } = useLanguage()
   const router = useRouter()
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [showAddExpense, setShowAddExpense] = useState(false)
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(groups[0]?.id || null)
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(initialGroups[0]?.id || null)
+  const [groups, setGroups] = useState<Group[]>(initialGroups)
+
+  const refreshGroups = () => {
+    setGroups(getUserGroups(user.id))
+  }
 
   const handleLogout = async () => {
+    clearCurrentUser()
     await logout()
     router.push("/")
     router.refresh()
@@ -130,12 +137,21 @@ export function DashboardContent({ user, groups }: DashboardContentProps) {
         )}
       </main>
 
-      <CreateGroupDialog open={showCreateGroup} onOpenChange={setShowCreateGroup} userId={user.id} />
+      <CreateGroupDialog
+        open={showCreateGroup}
+        onOpenChange={(open) => {
+          setShowCreateGroup(open)
+          if (!open) refreshGroups()
+        }}
+        userId={user.id}
+      />
 
       {selectedGroup && (
         <AddExpenseDialog
           open={showAddExpense}
-          onOpenChange={setShowAddExpense}
+          onOpenChange={(open) => {
+            setShowAddExpense(open)
+          }}
           groupId={selectedGroup}
           userId={user.id}
         />
