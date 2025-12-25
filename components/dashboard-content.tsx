@@ -6,8 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DollarSign, Plus, Users, LogOut } from "lucide-react"
 import { logout } from "@/lib/api"
-import { getUserGroups, clearCurrentUser } from "@/lib/client-store"
-import type { User, Group } from "@/lib/client-store"
+import type { User, Group } from "@/lib/kv-store"
 import { useRouter } from "next/navigation"
 import { CreateGroupDialog } from "@/components/create-group-dialog"
 import { AddExpenseDialog } from "@/components/add-expense-dialog"
@@ -26,14 +25,12 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<string | null>(initialGroups[0]?.id || null)
-  const [groups, setGroups] = useState<Group[]>(initialGroups)
 
   const refreshGroups = () => {
-    setGroups(getUserGroups(user.id))
+    router.refresh()
   }
 
   const handleLogout = async () => {
-    clearCurrentUser()
     await logout()
     router.push("/")
     router.refresh()
@@ -86,7 +83,7 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
         </div>
 
         {/* Groups Tabs */}
-        {groups.length === 0 ? (
+        {initialGroups.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Users className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -102,7 +99,7 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
           <Tabs value={selectedGroup || undefined} onValueChange={setSelectedGroup}>
             <div className="flex items-center justify-between mb-4">
               <TabsList>
-                {groups.map((group) => (
+                {initialGroups.map((group) => (
                   <TabsTrigger key={group.id} value={group.id}>
                     {group.name}
                   </TabsTrigger>
@@ -116,7 +113,7 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
               )}
             </div>
 
-            {groups.map((group) => (
+            {initialGroups.map((group) => (
               <TabsContent key={group.id} value={group.id}>
                 <div className="space-y-6">
                   <Card>
@@ -151,6 +148,7 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
           open={showAddExpense}
           onOpenChange={(open) => {
             setShowAddExpense(open)
+            if (!open) refreshGroups()
           }}
           groupId={selectedGroup}
           userId={user.id}

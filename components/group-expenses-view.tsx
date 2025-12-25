@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { getGroupExpenses, getGroupMembers, payExpense, cancelExpense } from "@/lib/client-store"
-import type { Expense, User } from "@/lib/client-store"
+import { getExpenses, getMembers, payExpenseAction, cancelExpenseAction } from "@/lib/api"
+import type { Expense, User } from "@/lib/kv-store"
 import { DollarSign, Check, X } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 
@@ -16,14 +17,15 @@ interface GroupExpensesViewProps {
 
 export function GroupExpensesView({ groupId, userId }: GroupExpensesViewProps) {
   const { t } = useLanguage()
+  const router = useRouter()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [members, setMembers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
   const loadData = async () => {
     setLoading(true)
-    const expensesData = getGroupExpenses(groupId)
-    const membersData = getGroupMembers(groupId)
+    const expensesData = await getExpenses(groupId)
+    const membersData = await getMembers(groupId)
     setExpenses(expensesData)
     setMembers(membersData)
     setLoading(false)
@@ -39,13 +41,15 @@ export function GroupExpensesView({ groupId, userId }: GroupExpensesViewProps) {
   }
 
   const handlePay = async (expenseId: string) => {
-    payExpense(expenseId, userId)
+    await payExpenseAction(expenseId, userId)
     await loadData()
+    router.refresh()
   }
 
   const handleCancel = async (expenseId: string) => {
-    cancelExpense(expenseId)
+    await cancelExpenseAction(expenseId)
     await loadData()
+    router.refresh()
   }
 
   const getAmountOwed = (expense: Expense) => {

@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { signup } from "@/lib/api"
-import { createUser, setCurrentUser } from "@/lib/client-store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -44,10 +43,12 @@ export default function SignUpPage() {
     }
 
     try {
-      const user = createUser(email, username, displayName, password)
-      setCurrentUser(user)
+      const result = await signup(email, username, displayName, password)
 
-      await signup(email, username, displayName, password)
+      if (!result.success) {
+        console.error("Sign-up error:", result.toString())
+        throw new Error(result.error || "An error occurred")
+      }
 
       router.push("/dashboard")
       router.refresh()

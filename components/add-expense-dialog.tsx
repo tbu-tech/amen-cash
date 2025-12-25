@@ -1,7 +1,6 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,8 +13,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { getGroupMembers, createExpense } from "@/lib/client-store"
-import type { User } from "@/lib/client-store"
+import { getMembers, createExpense } from "@/lib/api"
+import type { User } from "@/lib/kv-store"
 import { useLanguage } from "@/lib/language-context"
 
 interface AddExpenseDialogProps {
@@ -41,9 +40,8 @@ export function AddExpenseDialog({ open, onOpenChange, groupId, userId }: AddExp
   }, [open, groupId])
 
   const loadGroupMembers = async () => {
-    const membersList = getGroupMembers(groupId)
+    const membersList = await getMembers(groupId)
     setMembers(membersList)
-    // Select all members by default
     setSelectedMembers(new Set(membersList.map((m) => m.id)))
   }
 
@@ -65,12 +63,13 @@ export function AddExpenseDialog({ open, onOpenChange, groupId, userId }: AddExp
     try {
       const totalAmount = Number.parseFloat(amount)
 
-      createExpense(groupId, description, totalAmount, userId, Array.from(selectedMembers))
+      await createExpense(groupId, description, totalAmount, userId, Array.from(selectedMembers))
 
       setDescription("")
       setAmount("")
       setSelectedMembers(new Set())
       onOpenChange(false)
+      router.refresh()
     } catch (error) {
       console.error("Error adding expense:", error)
     } finally {
