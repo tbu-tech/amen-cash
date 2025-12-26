@@ -16,6 +16,12 @@ export const translations = {
     cancelled: "Cancelled",
     pending: "Pending",
     demo: "Demo",
+    delete: "Delete",
+    deleteGroup: "Delete Group",
+    deleteGroupConfirm: "Are you sure you want to delete this group? This action cannot be undone.",
+    deleteGroupButton: "Delete Group",
+    cannotDeleteGroup: "Cannot delete group with pending expenses",
+    groupDeleted: "Group deleted successfully",
 
     // Landing Page
     heroTitle: "Split expenses with friends, simply and fairly",
@@ -105,6 +111,12 @@ export const translations = {
     cancelled: "Annulé",
     pending: "En attente",
     demo: "Démo",
+    delete: "Supprimer",
+    deleteGroup: "Supprimer le groupe",
+    deleteGroupConfirm: "Êtes-vous sûr de vouloir supprimer ce groupe? Cette action est irréversible.",
+    deleteGroupButton: "Supprimer le groupe",
+    cannotDeleteGroup: "Impossible de supprimer un groupe avec des dépenses en attente",
+    groupDeleted: "Groupe supprimé avec succès",
 
     // Landing Page
     heroTitle: "Divisez les dépenses avec vos amis, simplement et équitablement",

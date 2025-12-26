@@ -63,13 +63,15 @@ export function AddExpenseDialog({ open, onOpenChange, groupId, userId }: AddExp
     try {
       const totalAmount = Number.parseFloat(amount)
 
-      await createExpense(groupId, description, totalAmount, userId, Array.from(selectedMembers))
+      const result = await createExpense(groupId, description, totalAmount, userId, Array.from(selectedMembers))
 
-      setDescription("")
-      setAmount("")
-      setSelectedMembers(new Set())
-      onOpenChange(false)
-      router.refresh()
+      if (result.success) {
+        setDescription("")
+        setAmount("")
+        setSelectedMembers(new Set())
+        onOpenChange(false)
+        router.refresh()
+      }
     } catch (error) {
       console.error("Error adding expense:", error)
     } finally {

@@ -207,6 +207,28 @@ export const cancelExpense = async (expenseId: string): Promise<void> => {
   await kv.set(EXPENSES_KEY, expenses)
 }
 
+export const deleteGroup = async (groupId: string): Promise<boolean> => {
+  const expenses = (await kv.get<Expense[]>(EXPENSES_KEY)) || []
+  const groupExpenses = expenses.filter((e) => e.groupId === groupId)
+
+  // Check if all expenses are settled (paid or cancelled)
+  const hasUnpaidExpenses = groupExpenses.some((e) => e.status === "pending")
+  if (hasUnpaidExpenses) {
+    return false // Cannot delete group with pending expenses
+  }
+
+  // Remove the group
+  const groups = (await kv.get<Group[]>(GROUPS_KEY)) || []
+  const filteredGroups = groups.filter((g) => g.id !== groupId)
+  await kv.set(GROUPS_KEY, filteredGroups)
+
+  // Remove all expenses for this group
+  const filteredExpenses = expenses.filter((e) => e.groupId !== groupId)
+  await kv.set(EXPENSES_KEY, filteredExpenses)
+
+  return true
+}
+
 export const calculateGroupBalances = async (groupId: string): Promise<Map<string, number>> => {
   const balances = new Map<string, number>()
   const groupExpenses = (await getGroupExpenses(groupId)).filter((e) => e.status === "pending")

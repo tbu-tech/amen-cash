@@ -15,6 +15,7 @@ import {
   payExpense as kvPayExpense,
   cancelExpense as kvCancelExpense,
   calculateGroupBalances,
+  deleteGroup as kvDeleteGroup,
 } from "@/lib/kv-store"
 import type { User, Group, Expense } from "@/lib/kv-store"
 
@@ -101,6 +102,18 @@ export async function getGroup(groupId: string): Promise<Group | undefined> {
 
 export async function getMembers(groupId: string): Promise<User[]> {
   return await getGroupMembers(groupId)
+}
+
+export async function deleteGroup(groupId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const deleted = await kvDeleteGroup(groupId)
+    if (!deleted) {
+      return { success: false, error: "Cannot delete group with pending expenses" }
+    }
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "An error occurred" }
+  }
 }
 
 // Expense operations

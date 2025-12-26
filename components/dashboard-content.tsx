@@ -4,8 +4,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DollarSign, Plus, Users, LogOut } from "lucide-react"
-import { logout } from "@/lib/api"
+import { DollarSign, Plus, Users, LogOut, Trash2 } from "lucide-react"
+import { logout, deleteGroup as deleteGroupAction } from "@/lib/api"
 import type { User, Group } from "@/lib/kv-store"
 import { useRouter } from "next/navigation"
 import { CreateGroupDialog } from "@/components/create-group-dialog"
@@ -13,6 +13,16 @@ import { AddExpenseDialog } from "@/components/add-expense-dialog"
 import { GroupExpensesView } from "@/components/group-expenses-view"
 import { useLanguage } from "@/lib/language-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface DashboardContentProps {
   user: User
@@ -25,10 +35,9 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<string | null>(initialGroups[0]?.id || null)
-
-  const refreshGroups = () => {
-    router.refresh()
-  }
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [groupToDelete, setGroupToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleLogout = async () => {
     await logout()
@@ -39,6 +48,30 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
   const handleAddExpense = (groupId: string) => {
     setSelectedGroup(groupId)
     setShowAddExpense(true)
+  }
+
+  const handleDeleteGroup = async () => {
+    if (!groupToDelete) return
+
+    setIsDeleting(true)
+    const result = await deleteGroupAction(groupToDelete)
+
+    if (result.success) {
+      // Switch to first available group or null
+      const remainingGroups = initialGroups.filter((g) => g.id !== groupToDelete)
+      setSelectedGroup(remainingGroups[0]?.id || null)
+      setShowDeleteConfirm(false)
+      setGroupToDelete(null)
+      router.refresh()
+    } else {
+      alert(result.error || t.cannotDeleteGroup)
+    }
+    setIsDeleting(false)
+  }
+
+  const initiateDelete = (groupId: string) => {
+    setGroupToDelete(groupId)
+    setShowDeleteConfirm(true)
   }
 
   return (
@@ -105,12 +138,20 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {selectedGroup && (
-                <Button onClick={() => handleAddExpense(selectedGroup)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t.addExpense}
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {selectedGroup && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => initiateDelete(selectedGroup)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t.deleteGroup}
+                    </Button>
+                    <Button onClick={() => handleAddExpense(selectedGroup)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t.addExpense}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             {initialGroups.map((group) => (
@@ -134,26 +175,35 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
         )}
       </main>
 
-      <CreateGroupDialog
-        open={showCreateGroup}
-        onOpenChange={(open) => {
-          setShowCreateGroup(open)
-          if (!open) refreshGroups()
-        }}
-        userId={user.id}
-      />
+      <CreateGroupDialog open={showCreateGroup} onOpenChange={setShowCreateGroup} userId={user.id} />
 
       {selectedGroup && (
         <AddExpenseDialog
           open={showAddExpense}
-          onOpenChange={(open) => {
-            setShowAddExpense(open)
-            if (!open) refreshGroups()
-          }}
+          onOpenChange={setShowAddExpense}
           groupId={selectedGroup}
           userId={user.id}
         />
       )}
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.deleteGroup}</AlertDialogTitle>
+            <AlertDialogDescription>{t.deleteGroupConfirm}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteGroup}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? t.pending : t.deleteGroupButton}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

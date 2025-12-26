@@ -62,17 +62,19 @@ export function CreateGroupDialog({ open, onOpenChange, userId }: CreateGroupDia
     setIsLoading(true)
 
     try {
-      await createGroup(
+      const result = await createGroup(
         name,
         userId,
         selectedMembers.map((m) => m.id),
       )
 
-      setName("")
-      setDescription("")
-      setSelectedMembers([])
-      onOpenChange(false)
-      router.refresh()
+      if (result.success) {
+        setName("")
+        setDescription("")
+        setSelectedMembers([])
+        onOpenChange(false)
+        router.refresh()
+      }
     } catch (error) {
       console.error("Error creating group:", error)
     } finally {

@@ -46,7 +46,6 @@ export default function SignUpPage() {
       const result = await signup(email, username, displayName, password)
 
       if (!result.success) {
-        console.error("Sign-up error:", result.error)
         throw new Error(result.error || "An error occurred")
       }
 
