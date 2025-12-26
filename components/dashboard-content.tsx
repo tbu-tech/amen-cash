@@ -38,6 +38,7 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [groupToDelete, setGroupToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const handleLogout = async () => {
     await logout()
@@ -48,6 +49,10 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
   const handleAddExpense = (groupId: string) => {
     setSelectedGroup(groupId)
     setShowAddExpense(true)
+  }
+
+  const handleExpenseAdded = () => {
+    setRefreshKey((prev) => prev + 1)
   }
 
   const handleDeleteGroup = async () => {
@@ -167,7 +172,7 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
                     </CardContent>
                   </Card>
 
-                  <GroupExpensesView groupId={group.id} userId={user.id} />
+                  <GroupExpensesView key={`${group.id}-${refreshKey}`} groupId={group.id} userId={user.id} />
                 </div>
               </TabsContent>
             ))}
@@ -183,6 +188,7 @@ export function DashboardContent({ user, groups: initialGroups }: DashboardConte
           onOpenChange={setShowAddExpense}
           groupId={selectedGroup}
           userId={user.id}
+          onExpenseAdded={handleExpenseAdded}
         />
       )}
 

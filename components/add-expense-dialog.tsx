@@ -22,9 +22,10 @@ interface AddExpenseDialogProps {
   onOpenChange: (open: boolean) => void
   groupId: string
   userId: string
+  onExpenseAdded?: () => void
 }
 
-export function AddExpenseDialog({ open, onOpenChange, groupId, userId }: AddExpenseDialogProps) {
+export function AddExpenseDialog({ open, onOpenChange, groupId, userId, onExpenseAdded }: AddExpenseDialogProps) {
   const { t } = useLanguage()
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
@@ -70,6 +71,7 @@ export function AddExpenseDialog({ open, onOpenChange, groupId, userId }: AddExp
         setAmount("")
         setSelectedMembers(new Set())
         onOpenChange(false)
+        onExpenseAdded?.()
         router.refresh()
       }
     } catch (error) {
